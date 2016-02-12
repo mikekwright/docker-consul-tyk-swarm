@@ -1,0 +1,12 @@
+{
+  "data_dir": "/consul/data",
+  "ui_dir": "/consul/webui",
+  "client_addr": "0.0.0.0",
+  "ports": {
+    "dns": 53
+  },
+  "recursor": "8.8.8.8",
+  "disable_update_check": true,
+	"server": true,
+	"log_level": "INFO"
+}

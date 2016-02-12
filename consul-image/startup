@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# vi: ft=sh
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+/consul/app/consul agent -config-dir="/etc/consul.d/server" -bootstrap

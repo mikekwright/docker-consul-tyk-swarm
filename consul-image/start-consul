@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# vi: ft=sh
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+CONSUL_IMAGE_NAME=${CONSUL_IMAGE_NAME-swarmconsul}
+CONSUL_CONFIG_OUTPUT=$SCRIPT_DIR/config.json
+
+build() {
+  docker build -t $CONSUL_IMAGE_NAME $SCRIPT_DIR
+}
+
+run() {
+  pushd $SCRIPT_DIR >> /dev/null
+  docker-compose up -d
+  popd >> /dev/null
+}
+
+if [[ $1 == "build" ]]; then
+  build 
+else
+  build
+  run
+fi
+

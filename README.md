@@ -66,3 +66,15 @@ fish
 
     open http://(docker-machine ip consul):8500/ui
 
+## References
+
+There are a number of great references that exist online that I used when going through this process including those listed below.  
+
+* [Running a small docker swarm cluster](http://blog.scottlowe.org/2015/03/06/running-own-docker-swarm-cluster/)    
+* [Docker - Evaluate Swarm in a sandbox](https://docs.docker.com/swarm/install-w-machine/)    
+* [Docker Swarm cluster using Consul](http://blog.arungupta.me/docker-swarm-cluster-using-consul/)   
+* [Docker DNS & Service Discovery with Consul and Registrator](http://artplustech.com/docker-consul-dns-registrator/)    
+* [Consul Service Discovery with Docker](http://progrium.com/blog/2014/08/20/consul-service-discovery-with-docker/)  
+* [Fun with Docker Swarm](https://www.safaribooksonline.com/blog/2015/11/17/fun-with-docker-swarm/)    
+
+

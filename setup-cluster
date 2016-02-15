@@ -71,7 +71,6 @@ setup_master() {
   attach_docker_to_machine $name
   local master_ip=$(machine_ip $name)
 
-  #docker run -d -p $MASTER_PORT:3376 -t -v /var/lib/boot2docker:/certs:ro swarm manage -H 0.0.0.0:3376 --tlsverify --tlscacert=/certs/ca.pem --tlscert=/certs/server.pem --tlskey=/certs/server-key.pem token://$cluster_id
   docker run -d -p $MASTER_PORT:3376 swarm manage -H 0.0.0.0:3376 consul://$
   echo $cluster_id
 }
@@ -108,12 +107,6 @@ start_system() {
   install_registrator $SLAVE2 $consul_ip
 
   start_service $MASTER redis
-
-  #setup_master $MASTER
-  #attach_slave $SLAVE1 $cluster_id
-  #attach_slave $SLAVE2 $cluster_id
-    # "--swarm --swarm-master --swarm-image 'swarm:latest' --swarm-host 'tcp://0.0.0.0:3376' --swarm-discovery token://$CLUSTER_ID"
-    # "--swarm --swarm-discovery token://$CLUSTER_ID"
 }
 
 stop_system() {

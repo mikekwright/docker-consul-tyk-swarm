@@ -1,0 +1,6 @@
+flaskapp:
+  build: .
+  restart: always
+  hostname: flaskapp
+  ports:
+    - 8000

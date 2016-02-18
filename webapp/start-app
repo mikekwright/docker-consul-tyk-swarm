@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# vi: ft=sh
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+pushd $SCRIPT_DIR >> /dev/null
+docker-compose build
+docker-compose up -d --force-recreate
+popd >> /dev/null

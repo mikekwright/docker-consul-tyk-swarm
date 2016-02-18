@@ -66,6 +66,11 @@ fish
 
     open http://(docker-machine ip consul):8500/ui
 
+## Issues
+
+There is a possibility that if you have used vagrant on you machine before then docker-machine will have problems with virtualbox, as vagrant
+seems to disable the DHCP server option of the host-only network.  More info can be found [here](https://github.com/docker/toolbox/issues/273#issuecomment-171155241)    
+
 ## References
 
 There are a number of great references that exist online that I used when going through this process including those listed below.  

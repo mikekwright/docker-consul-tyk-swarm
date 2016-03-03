@@ -1,0 +1,8 @@
+swarmconsul:
+  build: .
+  restart: always
+  hostname: consul
+  ports:
+    - "8500:8500"
+    - "172.17.0.1:53:53"
+    - "172.17.0.1:53:53/udp"

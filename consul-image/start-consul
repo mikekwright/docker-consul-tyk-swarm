@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# vi: ft=sh
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+DOCKER_NAME=$(docker info | grep Name | awk '{print $2}')
+DOCKER_NAME=${DOCKER_NAME-:default}
+
+build() {
+  docker build -t consul .
+}
+
+run_swarm_manager() {
+  build
+  docker run -d -p 8500:8500 --name swarm_consul consul
+}
+
+run_server() {
+  build
+  #docker run -d -p 172.17.0.1:53:53 -p 172.17.0.1:53:53/udp -p 8500:8500 --name consul --net overlay consul
+  docker run -d -p 53:53 -p 53:53/udp -p 8500:8500 --name consul_$DOCKER_NAME --net overlay consul
+}
+
+run_client() {
+  local server_ip=$1
+  build
+  #docker run -d -p 172.17.0.1:53:53 -p 172.17.0.1:53:53/udp -p 8500:8500 --name consul --net overlay consul /startup join $server_ip
+  docker run -d -p 53:53 -p 53:53/udp -p 8500:8500 --name consul_$DOCKER_NAME --net overlay consul /startup join $server_ip
+}
+
+pushd $SCRIPT_DIR >> /dev/null
+
+if [[ "$1" == "swarm" ]]; then
+  run_swarm_manager
+elif [[ "$1" == "server" ]]; then
+  run_server
+elif [[ "$1" == "client" ]]; then
+  run_client $2
+else
+  echo -e "Unknown option - $1"
+  exit 1
+fi
+
+popd >> /dev/null
+

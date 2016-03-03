@@ -1,0 +1,32 @@
+tyk_redis:
+  image: redis:latest
+  hostname: redis
+  environment: 
+    - "contraint:node=swarms1"
+tyk_mongo:
+  image: mongo:latest
+  hostname: mongo
+  environment: 
+    - "contraint:node=swarms1"
+tyk_gateway:
+  build: ./tyk-gateway/.
+  hostname: tyk_gateway
+  ports: 
+    - 8080:8080
+  links:
+    - tyk_redis:redis
+    - tyk_mongo:mongo
+  environment: 
+    - "contraint:node=swarms1"
+tyk_dashboard:
+  build: ./tyk-dashboard/.
+  hostname: tyk_dashboard
+  ports:
+    - 3000:3000
+  links:
+    - tyk_redis:redis
+    - tyk_mongo:mongo
+    - tyk_gateway:tyk_gateway
+  environment: 
+    - "contraint:node=swarms1"
+

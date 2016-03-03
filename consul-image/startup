@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# vi: ft=sh
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+bind_ip=$(ip addr | grep 'scope global eth0' | awk '{print $2}' | cut -f1 -d'/')
+#bind_ip=$(ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/')
+echo -e "Binding to $bind_ip"
+
+if [[ "$1" == "server" ]]; then
+  /consul/app/consul agent -bind $bind_ip -config-dir="/etc/consul.d/server" -bootstrap
+elif [[ "$1" == "join" ]]; then
+  /consul/app/consul agent -bind $bind_ip -config-dir="/etc/consul.d/client" -join $2
+else
+  echo -e "Unknown option $1"
+  exit 1
+fi
+

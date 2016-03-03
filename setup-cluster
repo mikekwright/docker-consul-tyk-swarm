@@ -1,0 +1,172 @@
+#!/usr/bin/env bash
+# vi: ft=sh
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+SWARM_CONSUL=${SWARM_CONSUL-consul}
+MASTER=${MASTER-swarmmaster}
+SLAVE1=${SLAVE1-swarms1}
+SLAVE2=${SLAVE2-swarms2}
+OVERLAY=${OVERLAY-overlay}
+MASTER_PORT=${MASTER_PORT-3376}
+REGISTRATOR_IMAGE=${REGISTRATOR_IMAGE-gliderlabs/registrator:latest}
+
+#DOCKER_MACHINE_DRIVER=${DOCKER_MACHINE_DRIVER-xhyve}
+#DOCKER_MACHINE_DRIVER=${DOCKER_MACHINE_DRIVER-vmwarefusion}
+DOCKER_MACHINE_DRIVER=${DOCKER_MACHINE_DRIVER-virtualbox}
+
+machine_ip() {
+  local name=$1
+  echo $(docker-machine ip $name)
+}
+
+attach_docker_to_swarm() {
+  local name=$1
+  eval $(docker-machine env --swarm $name --shell bash)
+}
+
+attach_docker_to_machine() {
+  local name=$1
+  eval $(docker-machine env $name --shell bash)
+}
+
+install_registrator() {
+  local name=$1
+  local consule_ip=$2
+  local network_name=$3
+  echo -e "installing registrator on $name"
+  attach_docker_to_machine $name
+  docker run -d --name="registrator-$name" --volume=/var/run/docker.sock:/tmp/docker.sock --net $network_name $REGISTRATOR_IMAGE consul://$consule_ip:8500
+}
+
+create_machine() {
+  local name=$1
+  local options=$2
+  echo "Creating machine - $name"
+  docker-machine create --driver $DOCKER_MACHINE_DRIVER $options $name
+  machine_ip $name
+}
+
+delete_machine() {
+  local name=$1
+  echo "Deleting machine - $name"
+  docker-machine rm -y $name
+}
+
+clean_up() {
+  delete_machine $MASTER 
+  delete_machine $SLAVE1 
+  delete_machine $SLAVE2 
+  delete_machine $SWARM_CONSUL
+}
+
+standup_consul() {
+  local name=$1
+  local option=${2:-swarm}
+  local server_ip=${3:-}
+  echo "Setting up consul - $name - $option"
+  attach_docker_to_machine $name
+  $SCRIPT_DIR/consul-image/start-consul $option $server_ip
+}
+
+setup_master() {
+  local name=$1
+  local consul_ip=$2
+  echo "Setting up master - $name - consule @ $consul_ip"
+  attach_docker_to_machine $name
+  local master_ip=$(machine_ip $name)
+
+  docker run -d -p $MASTER_PORT:3376 swarm manage -H 0.0.0.0:3376 consul://$
+  echo $cluster_id
+}
+
+attach_slave() {
+   local name=$1
+   local cluster_id=$2
+   echo "Setting up slave - $name"
+   local ip=$(machine_ip $name)
+   attach_docker_to_machine $name
+   docker run -d swarm join --addr=$ip:2376 token://$cluster_id
+}
+
+start_service() {
+  local swarm=$1
+  local service_image=$2
+
+  echo -e "Starting service in swarm $swarm - $service_image"
+  attach_docker_to_swarm $swarm
+  docker run -d --dns=172.17.0.1 -P $service_image
+}
+
+create_overlay() {
+   local name=$1
+   local network_name=$2
+   attach_docker_to_machine $name
+   docker network create --driver overlay $network_name
+}
+
+standup_consul_with_dns() {
+   local name=$1
+   attach_to_docker_machine $name
+   $SCRIPT_DIR/swarm-consul/start-consul
+}
+
+start_system() {
+  # 1. Create a node for managing the cluster (with a consul service)
+  create_machine $SWARM_CONSUL
+  standup_consul $SWARM_CONSUL swarm
+  local swarm_consul_ip=$(machine_ip $SWARM_CONSUL)
+
+  local consul_advertise=eth1
+
+  # 2a. Create the swarm master
+  create_machine $MASTER "--swarm --swarm-master --swarm-discovery consul://$swarm_consul_ip:8500/ --engine-opt='cluster-store=consul://$swarm_consul_ip:8500' --engine-opt='cluster-advertise=$consul_advertise:2376'"
+  #local consul_ip=$(machine_ip $MASTER)
+  # 2b. Create the overlay network to use for dns
+  create_overlay $MASTER $OVERLAY
+  # 2c. Create the consul service for applications in the cluster
+  standup_consul $MASTER server
+  local consul_ip=$(docker $(docker-machine config $MASTER) inspect -f '{{(index .NetworkSettings.Networks "overlay").IPAddress}}' consul)
+  echo -e "Consul ip - $consul_ip"
+
+  # 3a. Create a swarm node
+  create_machine $SLAVE1 "--swarm --swarm-discovery consul://$swarm_consul_ip:8500/ --engine-opt='cluster-store=consul://$swarm_consul_ip:8500' --engine-opt='cluster-advertise=$consul_advertise:2376'"
+  # 3b. Create a consul service for resolving dns to join consul cluster
+  standup_consul $SLAVE1 client $consul_ip
+  # 4. Repeat step 3 for second node
+  create_machine $SLAVE2 "--swarm --swarm-discovery consul://$swarm_consul_ip:8500/ --engine-opt='cluster-store=consul://$swarm_consul_ip:8500' --engine-opt='cluster-advertise=$consul_advertise:2376'"
+  standup_consul $SLAVE2 client $consul_ip
+
+  # 5. Install registrator on all nodes in swarm
+
+  #attach_docker_to_machine $MASTER
+  #docker network create --driver overlay overlay
+
+  #add_consul_agent
+  #create_machine $SLAVE1 "--swarm --swarm-discovery consul://$consul_ip:8500/ --engine-opt='cluster-store=consul://$consul_ip:8500' --engine-opt='cluster-advertise=eth1:2376'"
+  #create_machine $SLAVE2 "--swarm --swarm-discovery consul://$consul_ip:8500/ --engine-opt='cluster-store=consul://$consul_ip:8500' --engine-opt='cluster-advertise=eth1:2376'"
+   
+  install_registrator $MASTER $consul_ip $OVERLAY
+  install_registrator $SLAVE1 $consul_ip $OVERLAY
+  install_registrator $SLAVE2 $consul_ip $OVERLAY
+
+  start_service $MASTER redis
+}
+
+stop_system() {
+  clean_up
+}
+
+if [[ $# == 0 ]]; then
+  echo "Usage: $0 <start|stop>"
+  exit 1
+elif [[ $1 == "start" ]]; then
+  start_system
+elif [[ $1 == "stop" ]]; then
+  stop_system
+else
+  echo "Usage: $0 <start|stop>"
+  exit 2
+fi
+  
+
+

@@ -1,4 +1,9 @@
 FROM tykio/tyk-dashboard
 
-ADD tyk_analytics.conf /opt/tyk-dashboard/tyk_analytics.conf
+RUN apt-get update && \
+    apt-get install -y dnsutils
 
+ADD startup /startup
+ADD tyk_analytics.conf.template /tyk_analytics.conf.template
+
+CMD ["/startup"]

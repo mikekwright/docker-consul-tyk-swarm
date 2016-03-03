@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# vi: ft=sh
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+
+start_redis() {
+
+}
+
+start_mongo() {
+
+}
+
+start_tyk_gateway() {
+
+}
+
+start_tyk_dashboard() {
+
+}
+
+
+
+
+start_redis
+start_mongo
+start_tyk_gateway
+start_tyk_dashboard
+

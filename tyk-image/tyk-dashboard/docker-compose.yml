@@ -1,0 +1,9 @@
+tyk_dashboard:
+  build: .
+  hostname: tyk_dashboard
+  net: overlay
+  command: /bin/bash
+  dns: 
+    - 172.17.0.1
+  ports:
+    - 3000

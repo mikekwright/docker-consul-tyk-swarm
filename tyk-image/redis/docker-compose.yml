@@ -1,0 +1,9 @@
+tyk_redis:
+  image: redis
+  hostname: redis
+  net: overlay
+  dns: 
+    - 172.17.0.1
+  ports: 
+    - 6380
+

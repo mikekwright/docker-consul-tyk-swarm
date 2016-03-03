@@ -120,7 +120,6 @@ start_system() {
 
   # 2a. Create the swarm master
   create_machine $MASTER "--swarm --swarm-master --swarm-discovery consul://$swarm_consul_ip:8500/ --engine-opt='cluster-store=consul://$swarm_consul_ip:8500' --engine-opt='cluster-advertise=$consul_advertise:2376'"
-  #local consul_ip=$(machine_ip $MASTER)
   # 2b. Create the overlay network to use for dns
   create_overlay $MASTER $OVERLAY
   # 2c. Create the consul service for applications in the cluster
@@ -137,14 +136,6 @@ start_system() {
   standup_consul $SLAVE2 client $consul_ip
 
   # 5. Install registrator on all nodes in swarm
-
-  #attach_docker_to_machine $MASTER
-  #docker network create --driver overlay overlay
-
-  #add_consul_agent
-  #create_machine $SLAVE1 "--swarm --swarm-discovery consul://$consul_ip:8500/ --engine-opt='cluster-store=consul://$consul_ip:8500' --engine-opt='cluster-advertise=eth1:2376'"
-  #create_machine $SLAVE2 "--swarm --swarm-discovery consul://$consul_ip:8500/ --engine-opt='cluster-store=consul://$consul_ip:8500' --engine-opt='cluster-advertise=eth1:2376'"
-   
   install_registrator $MASTER $consul_ip $OVERLAY
   install_registrator $SLAVE1 $consul_ip $OVERLAY
   install_registrator $SLAVE2 $consul_ip $OVERLAY

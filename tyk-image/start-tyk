@@ -2,28 +2,38 @@
 # vi: ft=sh
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+SWARM_NAME=${SWARM_NAME:-swarmmaster}
 
 start_redis() {
-
+  pushd redis
+  docker-compose up -d
+  popd
 }
 
 start_mongo() {
-
+  pushd mongo
+  docker-compose up -d
+  popd
 }
 
 start_tyk_gateway() {
-
+  pushd tyk-gateway
+  docker-compose up -d
+  popd
 }
 
 start_tyk_dashboard() {
-
+  pushd tyk-dashboard
+  docker-compose up -d
+  popd
 }
 
-
-
+pushd $SCRIPT_DIR > /dev/null
 
 start_redis
 start_mongo
 start_tyk_gateway
 start_tyk_dashboard
+
+popd > /dev/null
 

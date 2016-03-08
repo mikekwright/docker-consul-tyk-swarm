@@ -1,0 +1,8 @@
+tyk_gateway:
+  build: .
+  hostname: tyk_gateway
+  net: overlay
+  dns: 
+    - 172.17.0.1
+  ports:
+    - "8080:8080"

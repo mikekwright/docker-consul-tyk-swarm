@@ -8,8 +8,8 @@
     "app_path": "/opt/tyk-gateway/apps/",
     "storage": {
         "type": "redis",
-        "host": "redis",
-        "port": 6379,
+        "host": "{{REDIS_HOST}}",
+        "port": {{REDIS_PORT}},
         "username": "",
         "password": "",
         "database": 0,
@@ -19,7 +19,7 @@
     "analytics_config": {
         "type": "mongo",
         "csv_dir": "/tmp",
-        "mongo_url": "mongodb://mongo:27017/tyk_analytics",
+        "mongo_url": "mongodb://{{MONGO_HOST}}:{{MONGO_PORT}}/tyk_analytics",
         "mongo_db_name": "tyk_analytics",
         "mongo_collection": "tyk_analytics",
         "purge_delay": 10,

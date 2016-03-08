@@ -1,10 +1,10 @@
 tyk_mongo:
   image: mongo:latest
   hostname: mongo
-  net: overlay
   dns:
-    - 172.17.0.1
+    - 192.168.99.101
+    - 8.8.8.8
   ports:
-    - 27017:27017
+    - 27017
     - 28017
 

@@ -31,11 +31,14 @@ attach_docker_to_machine() {
 
 install_registrator() {
   local name=$1
-  local consule_ip=$2
+  local consul_ip=$2
   local network_name=$3
   echo -e "installing registrator on $name"
+  local host=$(machine_ip $name)
   attach_docker_to_machine $name
-  docker run -d --name="registrator-$name" --volume=/var/run/docker.sock:/tmp/docker.sock --net $network_name $REGISTRATOR_IMAGE consul://$consule_ip:8500
+  #docker run -d --name="registrator-$name" --volume=/var/run/docker.sock:/tmp/docker.sock --net $network_name $REGISTRATOR_IMAGE consul://$consul_ip:8500
+  ## You need to force the ip to be public because bound ports are not accessible on overlay network (?)
+  docker run -d --name="registrator-$name" --volume=/var/run/docker.sock:/tmp/docker.sock --net $network_name $REGISTRATOR_IMAGE -ip $host consul://$consul_ip:8500
 }
 
 create_machine() {
@@ -124,7 +127,8 @@ start_system() {
   create_overlay $MASTER $OVERLAY
   # 2c. Create the consul service for applications in the cluster
   standup_consul $MASTER server
-  local consul_ip=$(docker $(docker-machine config $MASTER) inspect -f '{{(index .NetworkSettings.Networks "overlay").IPAddress}}' consul)
+  #local consul_ip=$(docker $(docker-machine config $MASTER) inspect -f '{{(index .NetworkSettings.Networks "overlay").IPAddress}}' consul)
+  local consul_ip=10.0.0.2
   echo -e "Consul ip - $consul_ip"
 
   # 3a. Create a swarm node

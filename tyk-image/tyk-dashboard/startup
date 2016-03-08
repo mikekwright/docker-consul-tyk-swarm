@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 # vi: ft=sh
 
-export REDIS_HOST=redis-6380.service.consul
+export REDIS_HOST=redis.service.consul
 export MONGO_HOST=mongo-27017.service.consul
+export TYK_GATEWAY_HOST=tykgateway_tyk_gateway.service.consul
 
 export REDIS_PORT=$(dig $REDIS_HOST SRV | grep SRV | tail -n1 | awk '{print $7}')
 export MONGO_PORT=$(dig $MONGO_HOST SRV | grep SRV | tail -n1 | awk '{print $7}')
+export TYK_GATEWAY_PORT=8080
 
-cat /tyk_analytics.conf.template | sed s/\{\{REDIS_HOST\}\}/$REDIS_HOST/g | sed s/\{\{REDIS_PORT\}\}/$REDIS_PORT/g | sed s/\{\{MONGO_HOST\}\}/$MONGO_HOST/g | sed s/\{\{MONGO_PORT\}\}/$MONGO_PORT/g > /opt/tyk-dashboard/tyk_analytics.conf
+cat /tyk_analytics.conf.template | sed s/\{\{REDIS_HOST\}\}/$REDIS_HOST/g | sed s/\{\{REDIS_PORT\}\}/$REDIS_PORT/g | sed s/\{\{MONGO_HOST\}\}/$MONGO_HOST/g | sed s/\{\{MONGO_PORT\}\}/$MONGO_PORT/g | sed s/\{\{TYK_GATEWAY_HOST\}\}/$TYK_GATEWAY_HOST/g | sed s/\{\{TYK_GATEWAY_PORT\}\}/$TYK_GATEWAY_PORT/g > /opt/tyk-dashboard/tyk_analytics.conf
 
 cat /opt/tyk-dashboard/tyk_analytics.conf
 

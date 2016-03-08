@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # vi: ft=sh
 
-export REDIS_HOST=redis-6380.service.consul
+export REDIS_HOST=redis.service.consul
 export MONGO_HOST=mongo-27017.service.consul
 
 export REDIS_PORT=$(dig $REDIS_HOST SRV | grep SRV | tail -n1 | awk '{print $7}')

@@ -38,7 +38,8 @@ install_registrator() {
   attach_docker_to_machine $name
   #docker run -d --name="registrator-$name" --volume=/var/run/docker.sock:/tmp/docker.sock --net $network_name $REGISTRATOR_IMAGE consul://$consul_ip:8500
   ## You need to force the ip to be public because bound ports are not accessible on overlay network (?)
-  docker run -d --name="registrator-$name" --volume=/var/run/docker.sock:/tmp/docker.sock --net $network_name $REGISTRATOR_IMAGE -ip $host consul://$consul_ip:8500
+  #docker run -d --name="registrator-$name" --volume=/var/run/docker.sock:/tmp/docker.sock --net $network_name $REGISTRATOR_IMAGE -ip $host consul://$consul_ip:8500
+  docker run -d --name="registrator-$name" --volume=/var/run/docker.sock:/tmp/docker.sock --net $network_name $REGISTRATOR_IMAGE -resync 120 -ip $host consul://$host:8500
 }
 
 create_machine() {
@@ -113,6 +114,18 @@ standup_consul_with_dns() {
    $SCRIPT_DIR/swarm-consul/start-consul
 }
 
+start_tyk() {
+  local swarm=$1
+  local service_image=$2
+
+  echo -e "Starting service in swarm $swarm - $service_image"
+  attach_docker_to_swarm $swarm
+
+  pushd tyk-image > /dev/null
+  ./start-tyk
+  popd > /dev/null
+}
+
 start_system() {
   # 1. Create a node for managing the cluster (with a consul service)
   create_machine $SWARM_CONSUL
@@ -144,7 +157,10 @@ start_system() {
   install_registrator $SLAVE1 $consul_ip $OVERLAY
   install_registrator $SLAVE2 $consul_ip $OVERLAY
 
-  start_service $MASTER redis
+  # 6. Starting up tyk
+  start_tyk
+
+  #start_service $MASTER redis
 }
 
 stop_system() {

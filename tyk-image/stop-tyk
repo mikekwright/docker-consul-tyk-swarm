@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# vi: ft=sh
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+DASHBOARD_USERNAME=${DASHBOARD_USERNAME:-test@test.com}
+DASHBOARD_PASSWORD=${DASHBOARD_PASSWORD:-changeme3}
+PORTAL_DOMAIN=${PORTAL_DOMAIN:-www.tyk-docker.com}
+HELPER_IMAGE=tyk_helper
+
+SWARM_NAME=${SWARM_NAME:-swarmmaster}
+
+info() {
+  local msg=$1
+  echo -e "$msg"
+}
+
+debug() {
+  local msg=$1
+  echo -e "$msg"
+}
+
+stop_redis() {
+  pushd redis
+  docker-compose kill
+  docker-compose rm -f
+  popd
+}
+
+stop_mongo() {
+  pushd mongo
+  docker-compose kill
+  docker-compose rm -f
+  popd
+}
+
+stop_tyk_gateway() {
+  pushd tyk-gateway
+  docker-compose kill
+  docker-compose rm -f
+  popd
+}
+
+stop_tyk_dashboard() {
+  pushd tyk-dashboard
+  docker-compose kill
+  docker-compose rm -f
+  popd
+}
+
+pushd $SCRIPT_DIR > /dev/null
+
+stop_redis
+stop_mongo
+stop_tyk_gateway
+stop_tyk_dashboard
+
+popd > /dev/null
+

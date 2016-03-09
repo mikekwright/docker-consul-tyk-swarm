@@ -2,22 +2,7 @@
 # vi: ft=sh
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-DASHBOARD_USERNAME=${DASHBOARD_USERNAME:-test@test.com}
-DASHBOARD_PASSWORD=${DASHBOARD_PASSWORD:-changeme3}
-PORTAL_DOMAIN=${PORTAL_DOMAIN:-www.tyk-docker.com}
-HELPER_IMAGE=tyk_helper
-
-SWARM_NAME=${SWARM_NAME:-swarmmaster}
-
-info() {
-  local msg=$1
-  echo -e "$msg"
-}
-
-debug() {
-  local msg=$1
-  echo -e "$msg"
-}
+source $SCRIPT_DIR/shared
 
 start_redis() {
   pushd redis
@@ -45,23 +30,11 @@ start_tyk_dashboard() {
   popd
 }
 
-build_helper_image() {
-  info "Building the helper image"
-  pushd helper
-  docker build -t $HELPER_IMAGE .
-  popd helper
-}
-
-find_dashboard_ip() {
-  IP=$(docker run --net overlay -e affinity:image==$HELPER_IMAGE $HELPER_IMAGE dig @10.0.0.2 tykdashboard_tyk_dashboard.service.consul | grep "0 IN\tA" | awk '{print $5}')
-  printf "$IP"
-}
 
 create_user() {
   #docker run -e affinity:image==$HELPER_IMAGE 
-  dashboard_ip=$(find_dashboard_ip)
-
-  docker run -e affinity:image==$HELPER_IMAGE $HELPER_IMAGE python --version
+  local dashboard_ip=$(find_dashboard_ip)
+  local gateway_ip=$(find_gateway_ip)
 
   ## Start by creating a new organization to use
   local org_data=$(docker run -e affinity:image==$HELPER_IMAGE $HELPER_IMAGE curl --silent --header "admin-auth: 12345" --header "Content-Type:application/json" --data '{"owner_name": "TestOrg5 Ltd.","owner_slug": "testorg", "cname_enabled":true}' http://$dashboard_ip:3000/admin/organisations 2>&1)
@@ -77,28 +50,18 @@ create_user() {
   local user_id=$(docker run -e affinity:image==$HELPER_IMAGE $HELPER_IMAGE sh -c "echo '$user_data' | python -c 'import json,sys;obj=json.load(sys.stdin);print obj[\"Meta\"][\"id\"]'")
   info "User id: $user_id"
 
-  ## After creating the user we will need to have a new API key
-  #local api_key=$(docker run -e affinity:image==$HELPER_IMAGE $HELPER_IMAGE curl --silent --header "Authorization: $user_auth" --header "Content-Type:application/json" -X POST --data '{"allowance":100,"rate":100,"per":1,"expires":-1,"quota_max":-1,"quota_renews":1449051461,"quota_remaining":-1,"quota_renewal_rate":60,"access_rights":{"$user_auth": {"api_id": "$user_auth","api_name":"Test API","versions": ["Default"]}},"meta_data": {}}' http://$dashboard_ip:3000/api/keys 2>&1)
-  #debug "Api key: $api_key"
-  #return
-
-  #user_auth="ba33dee6-475f-4c7a-5140-7cb217bba5fe"
-  #local user_list=$(docker run -e affinity:image==$HELPER_IMAGE $HELPER_IMAGE curl --silent --header "authorization: $user_auth" http://$dashboard_ip:3000/api/users 2>&1)
-  #local user_list=$(docker run -e affinity:image==$HELPER_IMAGE $HELPER_IMAGE curl --silent --header "admin-auth: 12345" http://$dashboard_ip:3000/api/users 2>&1)
-  #debug "User list: $user_list"
-  #local user_id=$(docker run -e affinity:image==$HELPER_IMAGE $HELPER_IMAGE echo $USER_LIST | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["users"][0]["id"]')
-  #info "User Id: $user_id"
-
-    
+  ## Setup the portal domain
   echo "Setting up the portal domain"
   output=$(docker run -e affinity:image==$HELPER_IMAGE $HELPER_IMAGE curl --silent -d "domain="$PORTAL_DOMAIN"" -H "admin-auth:12345" http://$dashboard_ip:3000/admin/organisations/$org_id/generate-portals)
   debug "Setting portal domain output: $output"
+
 
   info "===================================="
   info "Login at http://$dashboard_ip:3000/"
   info "Username: $DASHBOARD_USERNAME"
   info "Password: $DASHBOARD_PASSWORD"
   info "Portal: http://$PORTAL_DOMAIN"
+  info "Gateway: http://$gateway_ip:8080/"
 }
 
 

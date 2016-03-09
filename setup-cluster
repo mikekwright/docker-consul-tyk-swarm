@@ -36,9 +36,8 @@ install_registrator() {
   echo -e "installing registrator on $name"
   local host=$(machine_ip $name)
   attach_docker_to_machine $name
-  #docker run -d --name="registrator-$name" --volume=/var/run/docker.sock:/tmp/docker.sock --net $network_name $REGISTRATOR_IMAGE consul://$consul_ip:8500
   ## You need to force the ip to be public because bound ports are not accessible on overlay network (?)
-  #docker run -d --name="registrator-$name" --volume=/var/run/docker.sock:/tmp/docker.sock --net $network_name $REGISTRATOR_IMAGE -ip $host consul://$consul_ip:8500
+  #docker run -d --name="registrator-$name" --volume=/var/run/docker.sock:/tmp/docker.sock --net $network_name $REGISTRATOR_IMAGE -resync -ip $host consul://$consul_ip:8500
   docker run -d --name="registrator-$name" --volume=/var/run/docker.sock:/tmp/docker.sock --net $network_name $REGISTRATOR_IMAGE -resync 120 -ip $host consul://$host:8500
 }
 
@@ -159,7 +158,6 @@ start_system() {
 
   # 6. Starting up tyk
   start_tyk
-
   #start_service $MASTER redis
 }
 

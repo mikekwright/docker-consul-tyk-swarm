@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# vi: ft=sh
+
+DASHBOARD_USERNAME=${DASHBOARD_USERNAME:-test@test.com}
+DASHBOARD_PASSWORD=${DASHBOARD_PASSWORD:-changeme3}
+PORTAL_DOMAIN=${PORTAL_DOMAIN:-www.tyk-docker.com}
+HELPER_IMAGE=tyk_helper
+
+SWARM_NAME=${SWARM_NAME:-swarmmaster}
+ADMIN_AUTH="12345"
+GATEWAY_TOKEN="352d20ee67be67f6340b4c0605b044b7"
+
+info() {
+  local msg=$1
+  echo -e "$msg"
+}
+
+debug() {
+  local msg=$1
+  echo -e "$msg"
+}
+
+build_helper_image() {
+  info "Building the helper image"
+  pushd helper
+  docker build -t $HELPER_IMAGE .
+  popd helper
+}
+
+find_dashboard_ip() {
+  IP=$(docker run --net overlay -e affinity:image==$HELPER_IMAGE $HELPER_IMAGE dig @10.0.0.2 tykdashboard_tyk_dashboard.service.consul | grep "0 IN\tA" | awk '{print $5}')
+  printf "$IP"
+}
+
+find_gateway_ip() {
+  IP=$(docker run --net overlay -e affinity:image==$HELPER_IMAGE $HELPER_IMAGE dig @10.0.0.2 tykgateway_tyk_gateway.service.consul | grep "0\s*IN\s*A" | tail -n1 | awk '{print $5}')
+  printf "$IP"
+}
+
+run_in_helper() {
+  docker run -e affinity:image=$HELPER_IMAGE $HELPER_IMAGE $@
+}
+
